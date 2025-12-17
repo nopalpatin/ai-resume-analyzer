@@ -1,0 +1,5 @@
+env_baru/
+venv/
+__pycache__/
+*.pdf
+.env
