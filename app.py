@@ -4,7 +4,7 @@ from pypdf import PdfReader
 from google import genai
 
 # --- KONFIGURASI HALAMAN ---
-st.set_page_config(page_title="CV Roaster AI", page_icon="🔥")
+st.set_page_config(page_title="CV Analyze", page_icon="🔥")
 
 # Coba ambil dari Environment Variable (Server)
 # Kalau gak ada (di localhost), baru error atau minta input manual
@@ -22,8 +22,8 @@ def get_client():
     return genai.Client(api_key=MY_API_KEY)
 
 # --- UI VISUAL ---
-st.title("🔥 CV Roaster: Edisi Brutal")
-st.markdown("Upload CV kamu, dan biarkan AI menghancurkan mentalmu (demi kebaikan).")
+st.title("🔥 CV Analyze")
+st.markdown("Upload CV kamu")
 
 # 1. SIDEBAR: UPLOAD PDF
 with st.sidebar:
