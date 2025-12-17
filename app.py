@@ -4,7 +4,7 @@ from pypdf import PdfReader
 from google import genai
 
 # --- KONFIGURASI HALAMAN ---
-st.set_page_config(page_title="CV Analyze AI", page_icon="🔥")
+st.set_page_config(page_title="CV Analyze AI", )
 
 # Coba ambil dari Environment Variable (Server)
 # Kalau gak ada (di localhost), baru error atau minta input manual
