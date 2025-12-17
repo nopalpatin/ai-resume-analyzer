@@ -22,7 +22,7 @@ def get_client():
     return genai.Client(api_key=MY_API_KEY)
 
 # --- UI VISUAL ---
-st.title("🔥 CV Roaster: Edisi Brutal")
+st.title("🔥 CV Analyze")
 st.markdown("Upload CV kamu")
 
 # 1. SIDEBAR: UPLOAD PDF
