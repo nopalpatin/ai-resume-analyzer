@@ -2,6 +2,9 @@ import streamlit as st
 import os
 from pypdf import PdfReader
 from google import genai
+import json
+import plotly.express as px
+import pandas as pd
 
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="CV Analyze AI",page_icon="🔥" )
@@ -75,32 +78,70 @@ if prompt := st.chat_input("Tanya sesuatu tentang CV ini..."):
         # B. Pikirkan Jawaban AI
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
-            message_placeholder.markdown("🤖 *Sedang menilaimu...*")
+            message_placeholder.markdown("🤖 *Sedang memindai kompetensi...*")
             
             try:
-                # Siapkan Prompt Raksasa
+                # 1. PROMPT ENGINEERING KHUSUS JSON
                 full_prompt = f"""
-                Kamu adalah HR Manager Galak.
-                Data CV User: {st.session_state.cv_text}
+                Kamu adalah HR Analytics System yang sadis tapi akurat.
                 
-                Pertanyaan User: {prompt}
+                Tugasmu:
+                1. Analisis CV berikut: {st.session_state.cv_text}
+                2. Jawab pertanyaan user: "{prompt}"
+                3. BERIKAN SKOR (0-100) untuk 5 kategori ini:
+                   - Relevansi Skill (Apakah skill cocok dengan job market?)
+                   - Pengalaman (Kualitas pengalaman kerja/magang)
+                   - Pendidikan (Relevansi background studi)
+                   - Kerapian (Format CV dan tata bahasa)
+                   - "Selling Point" (Seberapa menarik kandidat ini?)
                 
-                Jawab dengan pedas, singkat, dan berdasarkan data CV di atas.
+                FORMAT OUTPUT WAJIB JSON (Tanpa markdown ```json, murni text):
+                {{
+                    "jawaban_text": "Jawaban verbal pedasmu di sini...",
+                    "skor": {{
+                        "Skill": 80,
+                        "Experience": 40,
+                        "Education": 90,
+                        "Formatting": 20,
+                        "Selling_Point": 50
+                    }}
+                }}
                 """
                 
-               # Panggil Google
-                client = get_client() # Ambil client utuh
-                response = client.models.generate_content( # Panggil dari client
+                # 2. PANGGIL GEMINI
+                client = get_client() 
+                response = client.models.generate_content(
                     model="gemini-flash-latest",
                     contents=full_prompt
                 )
                 
-                # Tampilkan hasil
-                reply = response.text
-                message_placeholder.markdown(reply)
+                # 3. PARSING HASIL (STRING -> JSON)
+                raw_text = response.text.replace("```json", "").replace("```", "").strip()
+                data = json.loads(raw_text)
                 
-                # Simpan ke history
-                st.session_state.messages.append({"role": "assistant", "content": reply})
+                # 4. TAMPILKAN TEKS JAWABAN
+                reply_text = data["jawaban_text"]
+                message_placeholder.markdown(reply_text)
+                
+                # 5. TAMPILKAN GRAFIK (RADAR CHART)
+                scores = data["skor"]
+                df = pd.DataFrame(dict(
+                    r=list(scores.values()),
+                    theta=list(scores.keys())
+                ))
+                
+                fig = px.line_polar(df, r='r', theta='theta', line_close=True)
+                fig.update_traces(fill='toself')
+                fig.update_layout(title="Peta Kelemahan Karirmu")
+                
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Simpan ke history (Note: Grafik tidak tersimpan di history chat standar, hanya teks)
+                st.session_state.messages.append({"role": "assistant", "content": reply_text})
+                
+            except json.JSONDecodeError:
+                st.error("AI gagal generate grafik. Mencoba mode teks biasa...")
+                st.markdown(response.text)
                 
             except Exception as e:
                 message_placeholder.error(f"Error: {e}")

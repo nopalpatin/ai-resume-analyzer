@@ -3,3 +3,4 @@ venv/
 __pycache__/
 *.pdf
 .env
+.streamlit/secrets.toml
