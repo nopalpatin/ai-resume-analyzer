@@ -1,7 +1,5 @@
 streamlit
 google-genai
 pypdf
-streamlit
-google-genai
-pypdf
-plotly  
+plotly
+st-gsheets-connection

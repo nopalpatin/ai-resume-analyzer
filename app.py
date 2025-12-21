@@ -5,6 +5,8 @@ from google import genai
 import json
 import plotly.express as px
 import pandas as pd
+from streamlit_gsheets import GSheetsConnection
+from datetime import datetime
 
 # --- KONFIGURASI HALAMAN ---
 st.set_page_config(page_title="CV Analyze AI",page_icon="🔥" )
@@ -134,7 +136,40 @@ if prompt := st.chat_input("Tanya sesuatu tentang CV ini..."):
                 fig.update_traces(fill='toself')
                 fig.update_layout(title="Peta Kelemahan Karirmu")
                 
+                # ... (Kode grafik plotly selesai di sini) ...
                 st.plotly_chart(fig, use_container_width=True)
+
+                # --- FITUR DATABASE: SIMPAN HASIL KE GOOGLE SHEETS ---
+                try:
+                    # 1. Hitung Total Skor (Rata-rata)
+                    total_score = sum(scores.values()) / len(scores)
+                    
+                    # 2. Siapkan Data Baris Baru
+                    new_data = pd.DataFrame([{
+                        "Timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "Total_Score": total_score,
+                        "Skill_Score": scores.get("Skill", 0),
+                        "Experience_Score": scores.get("Experience", 0),
+                        "Education_Score": scores.get("Education", 0),
+                        "Recommendation": data["jawaban_text"][:100] + "..." # Ambil 100 huruf awal aja biar gak penuh
+                    }])
+
+                    # 3. Koneksi ke Google Sheets
+                    conn = st.connection("gsheets", type=GSheetsConnection)
+                    
+                    # 4. Baca Data Lama
+                    existing_data = conn.read(worksheet="Sheet1", usecols=list(range(6)), ttl=5)
+                    
+                    # 5. Gabung Data (Lama + Baru)
+                    updated_df = pd.concat([existing_data, new_data], ignore_index=True)
+                    
+                    # 6. Update Google Sheets
+                    conn.update(worksheet="Sheet1", data=updated_df)
+                    
+                    st.toast("✅ Data Analysis tersimpan ke Database!", icon="💾")
+                    
+                except Exception as e:
+                    st.warning(f"Gagal simpan database: {e}")
                 
                 # Simpan ke history (Note: Grafik tidak tersimpan di history chat standar, hanya teks)
                 st.session_state.messages.append({"role": "assistant", "content": reply_text})
