@@ -180,3 +180,68 @@ if prompt := st.chat_input("Tanya sesuatu tentang CV ini..."):
                 
             except Exception as e:
                 message_placeholder.error(f"Error: {e}")
+
+# --- TARUH INI DI PALING BAWAH FILE APP.PY ---
+
+st.divider() # Garis pemisah
+st.header("✨ Magic Rewrite: Sulap Kalimat CV")
+st.caption("Punya pengalaman kerja tapi bingung nulisnya biar terdengar profesional? Tempel di sini.")
+
+# 1. BIKIN UI DULU (Supaya variabel 'rewrite_btn' tercipta)
+col1, col2 = st.columns([3, 1])
+
+with col1:
+    bullet_input = st.text_input("Contoh: 'Saya pernah jualan baju di pasar'", placeholder="Tulis satu kalimat pengalamanmu di sini...")
+
+with col2:
+    # Spacer biar tombol sejajar sama input
+    st.write("") 
+    st.write("")
+    # INI DIA TERSANGKA YANG HILANG TADI:
+    rewrite_btn = st.button("✨ Perbaiki", type="primary") 
+
+# 2. BARU JALANKAN LOGIKA (Setelah tombol didefinisikan)
+if rewrite_btn and bullet_input:
+    with st.spinner("Sedang meracik kata-kata maut..."):
+        try:
+            # Prompt Khusus Rewrite
+            rewrite_prompt = f"""
+            Kamu adalah Professional Resume Writer. 
+            Tugasmu adalah mengubah kalimat pengalaman kerja yang LEMAH menjadi KUAT menggunakan metode STAR (Situation, Task, Action, Result).
+            
+            Input User: "{bullet_input}"
+            
+            Instruksi:
+            1. Gunakan Action Verbs yang kuat (Mengelola, Menginisiasi, Meningkatkan).
+            2. Tambahkan angka/metrik kuantitatif (fiktif tapi logis) jika user tidak memberikannya.
+            3. Hasilkan 2 opsi variasi:
+               - Opsi 1: Profesional & Elegan.
+               - Opsi 2: Agresif & Hasil-Oriented.
+            4. Bahasa: INDONESIA Formal.
+            
+            Output format: Langsung berikan 2 poin bullet points tanpa basa-basi pembuka.
+            """
+            
+            # Cek API Key
+            if "GOOGLE_API_KEY" not in st.secrets:
+                st.error("API Key hilang! Cek secrets.toml.")
+                st.stop()
+            
+            # Panggil Client (Versi Baru)
+            api_key = st.secrets["GOOGLE_API_KEY"]
+            client = genai.Client(api_key=api_key)
+            
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=rewrite_prompt
+            )
+            
+            # Tampilkan Hasil
+            st.success("Saran Perbaikan:")
+            st.markdown(response.text)
+            
+            with st.expander("💡 Kenapa ini lebih baik?"):
+                st.write("Recruiter suka angka. Kalimat 'Jaga kasir' itu pasif. Kalimat 'Mengelola arus kas Rp X Juta' itu menunjukkan tanggung jawab.")
+                
+        except Exception as e:
+            st.error(f"Gagal rewrite: {e}")
